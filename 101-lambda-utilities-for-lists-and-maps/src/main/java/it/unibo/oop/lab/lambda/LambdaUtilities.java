@@ -1,7 +1,9 @@
 package it.unibo.oop.lab.lambda;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,7 +63,9 @@ public final class LambdaUtilities {
         /*
          * Suggestion: consider Optional.filter
          */
-        return null;
+        final List<Optional<T>> optionalList = new ArrayList<>();
+        list.forEach(elem -> optionalList.add(Optional.of(elem).filter(pre)));
+        return optionalList;
     }
 
     /**
@@ -80,7 +84,41 @@ public final class LambdaUtilities {
         /*
          * Suggestion: consider Map.merge
          */
-        return null;
+        final Map<R, Set<T>> result = new HashMap<>();
+        /*COMMENTI DI ALIN:
+         * il metodo istanza merge() delle Map cerca di aggiungere in una mappa già esistente
+         * un certo valore in corrispondenza di una certa chiave. Se in corrispondenza di tale chiave
+         * non c'è nessun valore, la merge è tranquilla e la aggiunge; tuttavia, potremmo trovarci nel caso
+         * in cui a tale chiave c'è già un valore. In tal caso la merge vuole una Bifunction che specifichi
+         * come comportarsi.
+         * 
+         * La bifunction è una funzione che dati due argomenti restituisce un risultato; in questo caso,
+         * poiché la mappa result è di tipo Map<R, Set<T>>, la merge si aspetta come valore di ritorno un 
+         * risultato di tipo Set<T>. La bifunction deve quindi prendere in input l'eventuale valore
+         * già presente in corrispondenza della chiave rispettiva ("oldSet"), e il Set<T> che vorremmo aggiungere 
+         * noi ("newSet"). L'esercizio richiede che questi due set vengano uniti; lo si fa con il metodo addAll()
+         * delle Collections; tuttavia, poiché addAll restituisce un booleano e noi vogliamo un Set<T>, ci tocca
+         * fare un corpo per la lambda con una parentesi graffa, che alla fine ha anche un'istruzione di ritorno
+         * del Set<T> creato. 
+         * 
+         * Siccome Bifunction è un'interfaccia funzionale, può essere implementata con le lambda:
+         * (argomento 1, argomento 2) -> { 
+         *      comportamento....;
+         *      return risultato; 
+         * }
+         * 
+         * ALTRO ASPETTO IMPORTANTE: OCCHIO ALL'INDENTAZIONE DELLE LAMBDA. Subito dopo l'apertura della graffa si va a capo,
+         * poi tutte le istruzioni si indentano di un tab come nel normale corpo dei metodi. 
+         * 
+         * Altra cosa bruttissima: nella riga della lambda c'è questo argomento passato alla merge:
+         * new HashSet<>(Arrays.asList(elem))
+         * Bisogna farlo così perché Set.of() restituisce una collezione immutabile. Che schifo.
+         */
+        list.forEach(elem -> result.merge(op.apply(elem), new HashSet<>(Arrays.asList(elem)), (oldSet, newSet) -> {
+            oldSet.addAll(newSet);
+            return oldSet;
+        }));
+        return result;
     }
 
     /**
@@ -101,7 +139,9 @@ public final class LambdaUtilities {
          *
          * Keep in mind that a map can be iterated through its forEach method
          */
-        return null;
+        final Map<K, V> result = new HashMap<>();
+        map.forEach((k, v) -> result.put(k, v.orElse(def.get())));
+        return result;
     }
 
     /**
