@@ -29,24 +29,42 @@ public final class MusicGroupImpl implements MusicGroup {
         this.songs.add(new MusicGroupImpl.Song(songName, albumName, duration));
     }
 
+    /*Usare la map ogni volta che si vuole applicare una trasformazione agli elementi di uno stream
+     * già esistente. Ogni Collection ha un metodo stream().
+     */
     @Override
     public Stream<String> orderedSongNames() {
-        return null;
+        return this.songs.stream()
+            .map(e -> e.getSongName())
+            .sorted();
     }
 
     @Override
     public Stream<String> albumNames() {
-        return null;
+        return this.albums.keySet().stream();
     }
 
+    /*Il metodo entrySet delle mappe restituisce un Set di coppie
+     * chiave-valore.
+     */
     @Override
     public Stream<String> albumInYear(final int year) {
-        return null;
+        return this.albums.entrySet()
+            .stream()
+            .filter(elem -> elem.getValue() == year)
+            .map(elem -> elem.getKey());
     }
 
+    /*Il metodo count purtroppo restituisce un long; decido di fare un 
+     * cast a int per rispettare l'implementazione del prof.
+     */
     @Override
     public int countSongs(final String albumName) {
-        return -1;
+        int result = 0;
+        result += (int) this.songs.stream()
+            .filter(elem -> elem.getAlbumName().get().equals(albumName))
+            .count();
+        return result;
     }
 
     @Override
