@@ -62,6 +62,7 @@ public final class MusicGroupImpl implements MusicGroup {
     public int countSongs(final String albumName) {
         int result = 0;
         result += (int) this.songs.stream()
+            .filter(elem -> elem.getAlbumName().isPresent())
             .filter(elem -> elem.getAlbumName().get().equals(albumName))
             .count();
         return result;
@@ -69,22 +70,54 @@ public final class MusicGroupImpl implements MusicGroup {
 
     @Override
     public int countSongsInNoAlbum() {
-        return -1;
+        int result = 0;
+        result += (int) this.songs.stream()
+            .filter(elem -> elem.getAlbumName().isEmpty())
+            .count();
+        return result;
     }
 
     @Override
     public OptionalDouble averageDurationOfSongs(final String albumName) {
-        return null;
+        return this.songs.stream()
+            .filter(elem -> elem.getAlbumName().isPresent())
+            .filter(elem -> elem.getAlbumName().get().equals(albumName))
+            .mapToDouble(elem -> elem.duration)
+            .average();
     }
 
     @Override
     public Optional<String> longestSong() {
-        return null;
+        return Optional.of(this.songs.stream()
+            .max((x, y) -> Double.compare(x.getDuration(), y.getDuration())))
+            .filter(x -> x.isPresent())
+            .map(elem -> elem.get().getSongName());
     }
 
     @Override
     public Optional<String> longestAlbum() {
-        return null;
+        final Map<Double, String> albumDurations = new HashMap<>();
+        this.albums.keySet().forEach(albumName -> albumDurations.put(computeAlbumDuration(albumName), albumName));
+        return Optional.of(albumDurations.get(albumDurations.keySet().stream()
+            .max((x, y) -> Double.compare(x, y))
+            .get())); //Credo di non star verificando se l'Optional<Double> restituito da max sia vuoto... però non so come farlo.
+    }
+
+    private double computeAlbumDuration(final String albumName) {
+        double duration = 0.0;
+        for (final Song song : this.songs) {
+            if (song.getAlbumName().isPresent() && song.getAlbumName().get().equals(albumName)) {
+                duration += song.getDuration();
+            }
+        }
+        /*Purtroppo il seguente codice non può essere usato perché la variabile locale duration
+         * deve essere final o di fatto final...
+         */
+        /* this.songs.stream()
+            .filter(song -> song.getAlbumName().isPresent())
+            .filter(song -> song.getAlbumName().get().equals(albumName))
+            .map(songBelongingToAlbum -> duration += songBelongingToAlbum.duration); */
+        return duration;
     }
 
     private static final class Song {
