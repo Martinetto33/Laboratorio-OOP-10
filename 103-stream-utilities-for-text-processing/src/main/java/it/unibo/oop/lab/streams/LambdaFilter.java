@@ -6,8 +6,9 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.LayoutManager;
 import java.awt.Toolkit;
+import java.util.List;
 import java.util.function.Function;
-
+import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -38,8 +39,26 @@ public final class LambdaFilter extends JFrame {
         /**
          * Commands.
          */
-        IDENTITY("No modifications", Function.identity());
-
+        IDENTITY("No modifications", Function.identity()),
+        LOWERCASE("Convert to lowercase", String::toLowerCase),
+        COUNTCHARS("Count the number of chars", input -> String.valueOf(input.chars().count())),
+        COUNTLINES("Count the number of lines", input -> String.valueOf(input.lines().count())),
+        /*Documentazione presa dal sito https://www.javaprogramto.com/2020/12/java-8-stream-join-string.html */
+        ALPHAORDER("List all the words in alphabetical order", input -> input.replace(' ', '\n')
+            .lines()
+            .sorted()
+            .collect(Collectors.joining("\n"))),
+        WORDCOUNT("Write the count for each word", input -> {
+            /*Creo questa lista perché dovrò scorrerla più volte. */
+            final List<String> allWords = input.replace(' ', '\n')
+                .lines()
+                .sorted()
+                .toList();
+            return allWords.stream()
+                .map(word -> word.concat(" -> " + countOccurrences(allWords, word)))
+                .distinct()
+                .collect(Collectors.joining("\n"));
+        });
         private final String commandName;
         private final Function<String, String> fun;
 
@@ -55,6 +74,12 @@ public final class LambdaFilter extends JFrame {
 
         public String translate(final String s) {
             return fun.apply(s);
+        }
+
+        public static String countOccurrences(final List<String> input, final String elem) {
+            long occurrences = 0;
+            occurrences += input.stream().filter(x -> x.equals(elem)).count();
+            return String.valueOf(occurrences);
         }
     }
 
